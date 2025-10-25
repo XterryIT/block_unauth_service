@@ -5,9 +5,7 @@ import subprocess
 
 
 def get_services():
-    """
-    Сканирует систему и ВОЗВРАЩАЕТ словарь {порт: {имя, pid}}.
-    """
+
     services = {}
     for conn in psutil.net_connections('inet'):
         if conn.status == 'LISTEN':
