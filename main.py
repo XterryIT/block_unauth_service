@@ -1,7 +1,8 @@
 import psutil
 import time
 import subprocess
-
+import logging
+import sys
 
 
 def get_services():
@@ -23,7 +24,6 @@ def get_services():
     return services
 
 
-
 def initialization():
     start_services = get_services()
 
@@ -42,7 +42,6 @@ def initialization():
     return start_services
 
 
-
 def show_services():
     service_dict = get_services()
 
@@ -55,7 +54,8 @@ def show_services():
         pid = service_info['pid'] if service_info['pid'] is not None else 'N/A'
         print(f"{port:<10} {process_name:<25} {pid:<10}")
     print("#"*55)
-
+    
+    return
 
 
 def terminating_systemctl(pid_to_kill, process_name):
@@ -73,30 +73,40 @@ def terminating_systemctl(pid_to_kill, process_name):
             print(f"  -> This is a systemd service: {service_name}. Stopping via systemctl...")
             subprocess.run(['sudo', 'systemctl', 'stop', service_name], check=True, capture_output=True)
             print(f"  ✅ Service {service_name} STOPPED.")
+            logging.info(f"Service {service_name} STOPPED.)
         else:
             
             print(f"  -> Not a systemd service. Killing process {pid_to_kill}...")
+            logging.debug(f"Not a systemd service. Killing process {pid_to_kill}.")
             p = psutil.Process(pid_to_kill)
             p.terminate() # Ask nicely first
             time.sleep(0.5) # Give it a moment
             if p.is_running():
                 p.kill() # Force kill
             print(f"  ✅ Process {pid_to_kill} ({process_name}) KILLED.")
-    
+            logging.info(f"Process {pid_to_kill} ({process_name}) KILLED.")  
     
     except psutil.NoSuchProcess:
         print(f"  -> Error: Procces with PID {pid_to_kill} does not exist")
+        logging.error(f"Procces with PID {pid_to_kill} does not exist.")
     except psutil.AccessDenied:
         print(f"  -> Error: Acces denided. No enough right to stop procces {pid_to_kill}.")
+        logging.error(f"Acces denided. No enough right to stop procces {pid_to_kill}.")
     except subprocess.CalledProcessError as e:
         print(f"  -> Error: 'systemctl stop' did not work.")
         if e.stderr:
             print(f"  -> {e.stderr.decode()}")
+            logging.error(f"'systemctl stop' did not work: {e.stderr.decode()}")
+        else:
+            logging.error(f"'systemctl stop' did not work.")
     except FileNotFoundError:
         print(f"  -> Error: Procces {pid_to_kill} disapire before scrip caught it (procces did not find).")
+        logging.error(f"Procces {pid_to_kill} disapire before scrip caught it (procces did not find).")
     except Exception as e:
         print(f"  -> Unecspected error: {e}")
+        logging.error(f"Unecspected error: {e}")
 
+    return
 
 
 def main():
@@ -152,9 +162,15 @@ def main():
 
                     show_services()
         
+    return
         
         
-        
-
 if __name__ == "__main__":
+    logging.basicConfig(
+        filename='block_unauth_service.log',
+        #stream=sys.stdout,
+        encoding='utf-8',
+        format="%(levelname)s:%(asctime)s:%(name)s:%(message)s",
+        level=logging.DEBUG)
+    
     main()
