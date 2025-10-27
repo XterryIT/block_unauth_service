@@ -73,16 +73,13 @@ def terminating_systemctl(pid_to_kill, process_name):
             print(f"  -> This is a systemd service: {service_name}. Stopping via systemctl...")
             subprocess.run(['sudo', 'systemctl', 'stop', service_name], check=True, capture_output=True)
             print(f"  ✅ Service {service_name} STOPPED.")
-            logging.info(f"Service {service_name} STOPPED.)
+            logging.info(f"Service {service_name} STOPPED.")
         else:
             
             print(f"  -> Not a systemd service. Killing process {pid_to_kill}...")
             logging.debug(f"Not a systemd service. Killing process {pid_to_kill}.")
             p = psutil.Process(pid_to_kill)
-            p.terminate() # Ask nicely first
-            time.sleep(0.5) # Give it a moment
-            if p.is_running():
-                p.kill() # Force kill
+            p.kill()
             print(f"  ✅ Process {pid_to_kill} ({process_name}) KILLED.")
             logging.info(f"Process {pid_to_kill} ({process_name}) KILLED.")  
     
